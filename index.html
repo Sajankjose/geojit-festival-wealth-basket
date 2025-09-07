@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Geojit — Festival Wealth Basket (Personalized FINAL v4)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --amber:#f59e0b; --muted:#6b7280; --bg:#fffaf4; --bubble:#fff; --user:#0ea5a6;
+    --ok:#16a34a; --warn:#b45309;
+  }
+  html,body{height:100%}
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:#111}
+  .app{max-width:980px;margin:0 auto;display:flex;flex-direction:column;height:100vh}
+  header{display:flex;gap:10px;align-items:center;padding:14px 16px;background:#ffedd5;border-bottom:1px solid #f1c27d}
+  .logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(#ffedd5,#f59e0b,#ef4444,#8b5cf6,#22c55e,#ffedd5)}
+  h1{font-size:18px;margin:0}
+  .muted{color:var(--muted);font-size:13px}
+  .chat{flex:1;overflow:auto;padding:18px}
+  .row{display:flex;gap:8px;align-items:flex-end;margin:10px 0}
+  .bot .bubble{background:var(--bubble);border:1px solid #f1c27d;border-radius:14px 14px 14px 6px;padding:12px 14px;max-width:78%;box-shadow:0 6px 18px rgba(245,158,11,.15)}
+  .user{justify-content:flex-end}
+  .user .bubble{background:var(--user);color:#fff;border-radius:14px 14px 6px 14px;padding:10px 12px;max-width:70%}
+  .inputbar{padding:14px 16px;border-top:1px solid #eee;background:#fff;display:flex;gap:8px;align-items:center}
+  input,button{font-size:15px;border-radius:12px;border:1px solid #e5e7eb;padding:10px 14px}
+  button{background:var(--amber);color:#fff;border:none;cursor:pointer}
+  button.link{background:#f3f4f6;color:#111;border:1px solid #e5e7eb}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .chip{background:#ecfeff;border:1px solid #99f6e4;padding:8px 10px;border-radius:999px;font-size:12px;color:#065f46;cursor:pointer}
+  .otp{display:flex;gap:8px;margin-top:8px}
+  .otp input{width:52px;text-align:center}
+  .card{border:1px solid #f1c27d;border-radius:14px;background:#fff;padding:12px;margin-top:10px}
+  .divider{height:1px;background:#eee;margin:8px 0}
+  .cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .tag{display:inline-flex;align-items:center;gap:6px;background:#ffedd5;border:1px solid #f59e0b;border-radius:999px;padding:4px 10px;font-size:12px}
+  .dot{width:20px;height:20px;border-radius:999px;background:#f59e0b;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+  .ok{color:var(--ok);font-weight:600}
+  .warn{color:var(--warn);font-weight:600}
+  .typing{display:inline-block;width:48px;height:16px;background:linear-gradient(90deg,#eee 25%,#f7f7f7 50%,#eee 75%);background-size:200% 100%;animation:typing 1.2s linear infinite;border-radius:8px;margin-left:6px}
+  @keyframes typing{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+  .confetti span{position:absolute;width:8px;height:12px;opacity:.9}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:8px;border-bottom:1px solid #eee;text-align:left;vertical-align:middle}
+  .right{text-align:right}
+  .pill{display:inline-block;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;font-size:12px;margin:4px 6px 0 0}
+  .note{font-size:12px;color:#6b7280}
+  .rmcard{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .certificate{border:2px dashed #f59e0b;border-radius:16px;padding:16px;text-align:center;background:#fffdf7}
+  .mf-amt{width:100px}
+  .pill-tag{display:inline-block;background:#ecfeff;border:1px solid #99f6e4;border-radius:999px;padding:2px 8px;font-size:11px;color:#065f46;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo"></div>
+    <div>
+      <h1>Geojit — Festival Wealth Basket</h1>
+      <div class="muted">Conversational, privacy-first, wealth-creation journey</div>
+    </div>
+    <div style="margin-left:auto"><button class="link" onclick="advisor()">Talk to Advisor</button></div>
+  </header>
+
+  <div id="chat" class="chat"></div>
+
+  <div class="inputbar">
+    <input id="msg" placeholder="Type a message…" style="flex:1" onkeydown="if(event.key==='Enter')send()">
+    <button onclick="send()">Send</button>
+  </div>
+
+  <div class="confetti" id="confetti"></div>
+</div>
+
+<script>
+(() => {
+  let step=0, mobile="", userName="", investAmount=0, styleSel="Balanced";
+  const MUHURAT_DATE="20 October", chat=document.getElementById('chat');
+  const ltp={ INFY:1500,HDFCBANK:1600,MARICO:600,ITC:450,TATAMOTORS:950 };
+  let lines=[
+    {sym:'INFY',name:'Infosys',pct:30,why:'Large-cap IT; stabiliser role.'},
+    {sym:'HDFCBANK',name:'HDFC Bank',pct:25,why:'Core banking strength; anchor.'},
+    {sym:'MARICO',name:'Marico',pct:20,why:'FMCG defensiveness; margins.'},
+    {sym:'ITC',name:'ITC',pct:15,why:'Dividend stability; low beta.'},
+    {sym:'TATAMOTORS',name:'Tata Motors',pct:10,why:'EV growth kicker.'}
+  ];
+  const mfTable=[
+    {name:"DSP Large Cap Fund",cat:"Large Cap",r1:"11.33%",r3:"22.82%",r5:"21.39%",code:"DSP_LARGE"},
+    {name:"Invesco India Large & Mid Cap Fund",cat:"Large & Mid Cap",r1:"14.39%",r3:"28.81%",r5:"26.04%",code:"INV_LM"},
+    {name:"Motilal Oswal Flexi Cap Fund",cat:"Flexi Cap",r1:"11.31%",r3:"26.79%",r5:"22.10%",code:"MO_FLEXI"},
+    {name:"Franklin India Prima Fund",cat:"Mid Cap",r1:"6.84%",r3:"28.84%",r5:"27.66%",code:"FRANK_PRIMA"},
+    {name:"Bandhan Focused Fund",cat:"Focused",r1:"11.59%",r3:"22.46%",r5:"21.30%",code:"BAND_FOCUS"},
+    {name:"LIC Infrastructure Fund",cat:"Sector (Infra)",r1:"3.68%",r3:"32.94%",r5:"33.88%",code:"LIC_INFRA"}
+  ];
+  const selections={equity:false,mfs:[],mfAmounts:{},insurance:[]};
+
+  function scrollToBottom(){ chat.scrollTop=chat.scrollHeight; }
+  function bubble(html,who='bot'){ const row=document.createElement('div'); row.className='row '+(who==='bot'?'bot':'user'); const b=document.createElement('div'); b.className='bubble'; b.innerHTML=html; row.appendChild(b); chat.appendChild(row); scrollToBottom(); }
+  function bot(t){ bubble(t,'bot'); }
+  function user(t){ bubble(t,'user'); }
+  function chips(items){ const div=document.createElement('div'); div.className='chips'; items.forEach(([label,fn])=>{ const el=document.createElement('span'); el.className='chip'; el.textContent=label; el.onclick=fn; div.appendChild(el); }); chat.appendChild(div); scrollToBottom(); }
+  function typing(ms=650){ const r=document.createElement('div'); r.className='row bot'; const b=document.createElement('div'); b.className='bubble'; const t=document.createElement('span'); t.className='typing'; b.appendChild(t); r.appendChild(b); chat.appendChild(r); scrollToBottom(); return new Promise(res=>setTimeout(()=>{r.remove();res();},ms)); }
+  function confetti(){ const c=document.getElementById('confetti'); c.innerHTML=''; for(let i=0;i<120;i++){ const s=document.createElement('span'); s.style.left=Math.random()*100+'%'; s.style.top='-10px'; s.style.background=['#f59e0b','#ef4444','#8b5cf6','#22c55e','#eab308'][Math.floor(Math.random()*5)]; s.style.transform='rotate('+(Math.random()*360)+'deg)'; s.style.animation=`drop ${2+Math.random()*2}s linear ${Math.random()}s forwards`; c.appendChild(s);} }
+  const sty=document.createElement('style'); sty.textContent=`@keyframes drop{to{transform:translateY(110vh) rotate(720deg)}}`; document.head.appendChild(sty);
+
+  async function start(){ bot("🪔 <b>Happy Diwali!</b> I’m your Geojit assistant. Our aim is your <b>wealth creation</b>, with a personal touch."); await typing(); bot(`<span class="tag"><span class="dot">1</span> Start</span><br><b>Enter your mobile number</b> to begin. We’ll send an OTP.`); step=1; }
+  function send(){ const el=document.getElementById('msg'); const text=el.value.trim(); if(!text)return; user(text); el.value=''; route(text); }
+  async function route(text){
+    if(step===1){ mobile=text.replace(/\s+/g,''); if(/^(\+91)?[6-9]\d{9}$/.test(mobile)){ mobile=mobile.replace(/^\+91/,'');
+        await typing(); bot(`OTP sent to <b>${mobile.replace(/^(\d{2})\d{6}(\d{2})$/,'$1******$2')}</b>. Enter the 4-digit OTP:`); otpWidget(); step=2;
+      } else { await typing(); bot(`<span class="warn">Please enter a valid Indian mobile: +91 optional, then 10 digits starting 6–9.</span>`); } return; }
+    if(step===3){ const n=Number(text.replace(/[^\d]/g,'')); if(!n||n<10000){ await typing(); bot(`<span class="warn">Minimum is ₹10,000. Please enter ₹10,000 or more.</span>`); return;} investAmount=n; await afterAmount(); return; }
+  }
+  function otpWidget(){ const wrap=document.createElement('div'); wrap.className='otp'; for(let i=1;i<=4;i++){ const inp=document.createElement('input'); inp.maxLength=1; inp.oninput=()=>{ if(inp.value&&i<4)wrap.children[i].focus(); else if(i===4)verifyOTP(wrap); }; wrap.appendChild(inp);} chat.appendChild(wrap); scrollToBottom(); wrap.children[0].focus(); }
+  function fetchAvailableBalance(){ return 30000; }
+  function randomSince(){ return 2016 + Math.floor(Math.random()*8); }
+  function behaviorTag(){ return ["Steady SIPper","Festival investor","Growth-seeking","Conservative starter"][Math.floor(Math.random()*4)]; }
+
+  async function verifyOTP(wrap){
+    const code=Array.from(wrap.children).map(x=>x.value).join(''); if(code.length<4){ bot(`<span class="warn">Please enter the 4-digit OTP.</span>`); return; }
+    await typing();
+    const sample=["Ramesh","Ananya","Sanjana","Arjun","Meera","Sajan"]; userName=sample[Math.floor(Math.random()*sample.length)];
+    const since=randomSince(); const beh=behaviorTag();
+    const suggestion = beh.includes("Conservative") ? "Start with balanced equity + 2 SIPs; add insurance cover via RM." :
+                      beh.includes("Growth") ? "Add a growth-tilted equity basket + 3 diversified SIPs." :
+                      beh.includes("Festival") ? "Lock Muhurat equity now and start 2 SIPs to build discipline." :
+                                                 "Keep your SIP momentum; add a Muhurat equity starter.";
+    bot(`Welcome, <b>${userName}</b>. Before we begin, here’s a quick glance at your relationship with us (kept private & used only to personalise):`);
+    bot(`<div class="card">
+      <div><b>Profile at a glance</b> <span class="note">• private • used only to personalise</span></div>
+      <div class="divider"></div>
+      <div><b>Name:</b> ${userName}</div>
+      <div><b>With Geojit since:</b> ${since}</div>
+      <div><b>Investment behaviour:</b> ${beh}</div>
+      <div class="note" style="margin-top:6px">Our guidance for you: ${suggestion}</div>
+    </div>`);
+    await typing();
+    bot(`<span class="tag"><span class="dot">2</span> Amount</span><br><b>How much would you like to invest this Diwali?</b><br><span class="note">Minimum ₹10,000. We’ll craft your equity basket first, then suggest MF SIPs. Insurance is optional via RM call.</span>`);
+    chips([["₹10,000",()=>setAmount(10000)],["₹25,000",()=>setAmount(25000)],["₹50,000",()=>setAmount(50000)],["₹1,00,000",()=>setAmount(100000)],["Enter custom",()=>{step=3; bot("Please type an amount, e.g. 30000.");}]]);
+  }
+
+  async function setAmount(v){ investAmount=v; user("₹"+v.toLocaleString('en-IN')); await afterAmount(); }
+
+  async function afterAmount(){
+    await typing();
+    bot(`<span class="ok">Great — crafting your plan for ₹${investAmount.toLocaleString('en-IN')}.</span> This is <b>uniquely</b> for you, ${userName}.`);
+    await typing();
+    const bal=fetchAvailableBalance();
+    if(bal>=investAmount){ bot(`Your current trading balance is <b>₹${bal.toLocaleString('en-IN')}</b> — enough to execute on <b>${MUHURAT_DATE}</b>.`); }
+    else { bot(`Your current trading balance is <b>₹${bal.toLocaleString('en-IN')}</b>. Please ensure at least <b>₹${investAmount.toLocaleString('en-IN')}</b> is available by <b>${MUHURAT_DATE}</b> to execute.`); chips([["Add Funds",()=>bot("Opening Add Funds (demo)")],["Pledge Securities",()=>bot("Opening Pledge (demo)")],["I’ll ensure by 20 Oct",()=>bot("Noted — we’ll remind you.")]]); }
+    await typing();
+    stylePicker(true);
+    await typing(500);
+    pickEquity();
+  }
+
+  function stylePicker(inline=false){ bot(inline?"Pick a style (we’ll fine-tune allocations):":"Pick an investing style:"); chips([["Balanced",()=>setStyle("Balanced")],["Stability",()=>setStyle("Stability")],["Growth",()=>setStyle("Growth")],["Income",()=>setStyle("Income")]]); }
+  function setStyle(s){ styleSel=s; if(s==="Growth") setAlloc([20,20,15,10,35]); else if(s==="Stability") setAlloc([35,30,15,15,5]); else if(s==="Income") setAlloc([30,25,15,25,5]); else setAlloc([30,25,20,15,10]); bot(`Style set to <b>${s}</b>.`); }
+
+  function pickEquity(){
+    const html=`<div class="card"><div class="tag"><span class="dot">3</span> Equity Muhurat Portfolio</div><div class="note" style="margin-top:6px">For ₹${investAmount.toLocaleString('en-IN')} with a <b>${styleSel}</b> tilt.</div><div class="divider"></div><div id="eq-wrap"></div><div class="divider"></div><div class="cta"><button onclick="__addEquity()">Add Equity Basket</button><button class="link" onclick="__stylePicker()">Refine style</button></div></div>`;
+    bot(html); renderTable(); recalcQty();
+  }
+
+  function renderTable(){ const wrap=chat.querySelector('#eq-wrap'); if(!wrap)return;
+    const table=document.createElement('table');
+    table.innerHTML=`<thead><tr><th>Stock</th><th>Alloc %</th><th>Adjust</th><th class="right">Qty (est.)</th><th>Why (for you)</th></tr></thead><tbody id="plines"></tbody><tfoot><tr><td><b>Total</b></td><td id="totalPct">100%</td><td></td><td class="right" id="totalQty">—</td><td></td></tr></tfoot>`;
+    wrap.innerHTML=''; wrap.appendChild(table);
+    const tbody=table.querySelector('#plines');
+    lines.forEach((ln,idx)=>{ const tr=document.createElement('tr');
+      tr.innerHTML=`<td>🪔 <b>${ln.sym}</b><br><span class="muted">${ln.name}</span></td><td><b>${ln.pct}%</b></td><td><input type="range" min="5" max="40" step="1" value="${ln.pct}" oninput="__updatePct(${idx}, this.value)"></td><td class="right"><span id="qty-${idx}">0</span></td><td>${ln.why}</td>`;
+      tbody.appendChild(tr); });
+    updateTotals();
+  }
+  function setAlloc(arr){ lines=lines.map((l,i)=>({...l,pct:arr[i]})); renderTable(); recalcQty(); }
+  function updateTotals(){ const tot=lines.reduce((s,o)=>s+o.pct,0).toFixed(1); const el=chat.querySelector('#totalPct'); if(el) el.textContent=(''+tot).replace(/\.0$/,'')+'%'; }
+  function recalcQty(){ const amt=investAmount||50000; let totalQty=0; lines.forEach((ln,idx)=>{ const alloc=ln.pct/100*amt*0.9875; const price=ltp[ln.sym]||1000; const qty=Math.max(1,Math.floor(alloc/price)); totalQty+=qty; const el=chat.querySelector('#qty-'+idx); if(el) el.textContent=qty; }); const tq=chat.querySelector('#totalQty'); if(tq) tq.textContent=totalQty; updateTotals(); }
+  function updatePct(idx,v){ v=Math.max(5,Math.min(40,Number(v))); const others=lines.filter((_,i)=>i!==idx); const rest=100-v; const sumOthers=others.reduce((s,o)=>s+o.pct,0); const scale=rest/sumOthers; lines=lines.map((o,i)=>i===idx?{...o,pct:v}:{...o,pct:+(o.pct*scale).toFixed(1)}); const tot=lines.reduce((s,o)=>s+o.pct,0); const drift=+(100-tot).toFixed(1); if(Math.abs(drift)>0.1){ const li=lines.map((o,i)=>[o.pct,i]).sort((a,b)=>b[0]-a[0])[0][1]; lines[li].pct=+(lines[li].pct+drift).toFixed(1); } renderTable(); recalcQty(); }
+
+  function addEquity(){ selections.equity=true; confetti(); bot(`<span class="ok">Equity basket added.</span>`); mfIntroThenTable(); }
+
+  async function mfIntroThenTable(){
+    await typing();
+    bot(`<b>Geojit guidance:</b> To nurture long-term wealth, we recommend adding a few <b>disciplined SIPs</b> alongside your Muhurat equity basket. We’ll personalise suggestions for you — you can edit anytime.`);
+    await typing();
+
+    let recommended=["DSP_LARGE","INV_LM","MO_FLEXI"];
+    if(styleSel==="Growth") recommended=["INV_LM","MO_FLEXI","FRANK_PRIMA"];
+    else if(styleSel==="Stability") recommended=["DSP_LARGE","BAND_FOCUS","MO_FLEXI"];
+    else if(styleSel==="Income") recommended=["DSP_LARGE","BAND_FOCUS","INV_LM"];
+
+    const monthlyBudget = Math.max(1000, Math.round(investAmount*0.03/500)*500);
+    const perFund = Math.max(500, Math.floor(monthlyBudget/recommended.length/500)*500);
+
+    const html=`<div class="card">
+      <div class="tag"><span class="dot">4</span> Mutual Fund SIP Suggestions <span class="pill-tag">Personalised</span></div>
+      <div class="note" style="margin-top:6px">Pre-selected for your style (<b>${styleSel}</b>). Edit or add freely — the goal is steady compounding.</div>
+      <div class="divider"></div>
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th>Select</th><th>Fund Name</th><th>Category</th><th>1 Yr</th><th>3 Yr</th><th>5 Yr</th><th class="right">SIP / mo</th></tr></thead>
+          <tbody id="mf-tbody"></tbody>
+          <tfoot><tr><td colspan="6" class="right"><b>Total SIP</b></td><td class="right" id="sip-total">₹ 0</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="cta" style="margin-top:8px">
+        <button onclick="__addMF()">Add selected SIPs</button>
+        <button class="link" onclick="__skipMF()">Skip for now</button>
+      </div>
+    </div>`;
+    bot(html);
+
+    const tbody=chat.querySelector('#mf-tbody');
+    if(tbody){
+      mfTable.forEach(mf=>{
+        const isRec=recommended.includes(mf.code);
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td><input type="checkbox" id="mf-${mf.code}" ${isRec?'checked':''} onchange="__recalcSIP()">${isRec?'<span class="pill-tag">Recommended</span>':''}</td>
+          <td><b>${mf.name}</b></td>
+          <td>${mf.cat}</td>
+          <td>${mf.r1}</td>
+          <td>${mf.r3}</td>
+          <td>${mf.r5}</td>
+          <td class="right">₹ <input class="mf-amt" type="number" id="sip-${mf.code}" value="${isRec?perFund:1500}" min="500" step="500" oninput="__recalcSIP()"></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    recalcSIP();
+  }
+
+  function recalcSIP(){ let total=0; mfTable.forEach(mf=>{ const chk=chat.querySelector('#mf-'+mf.code); const amtEl=chat.querySelector('#sip-'+mf.code); if(chk&&chk.checked){ total+=Math.max(500, Number(amtEl.value||1500)); } }); const el=chat.querySelector('#sip-total'); if(el) el.textContent='₹ '+total.toLocaleString('en-IN'); }
+
+  function addMF(){
+    const picks=[]; selections.mfAmounts={};
+    mfTable.forEach(mf=>{ const chk=chat.querySelector('#mf-'+mf.code); const amtEl=chat.querySelector('#sip-'+mf.code);
+      if(chk&&chk.checked){ const val=Math.max(500,Number(amtEl.value||1500)); picks.push(mf.code); selections.mfAmounts[mf.code]=val; }
+    });
+    if(picks.length===0){ bot(`<span class="warn">Please select at least one SIP to add.</span>`); return; }
+    selections.mfs=picks; confetti(); bot(`<span class="ok">${picks.length} SIP(s) added.</span>`); insuranceStep();
+  }
+  function skipMF(){ selections.mfs=[]; selections.mfAmounts={}; insuranceStep(); }
+
+  async function insuranceStep(){
+    await typing();
+    const html=`<div class="card"><div class="tag"><span class="dot">5</span> Insurance (Optional, RM Call)</div><div class="note" style="margin-top:6px">We’ll arrange a call with your Relationship Manager to right-size cover.</div><div class="divider"></div><label class="pill"><input type="checkbox" id="ins-life"> Term Life (₹1 Cr)</label><label class="pill"><input type="checkbox" id="ins-health"> Health Cover (Family)</label><div class="cta"><button onclick="__arrangeCall()">Arrange RM Call</button><button class="link" onclick="__skipIns()">Skip</button></div></div>`;
+    bot(html);
+  }
+
+  function arrangeCall(){ const needs=[]; if(chat.querySelector('#ins-life')?.checked)needs.push('Term Life'); if(chat.querySelector('#ins-health')?.checked)needs.push('Health Cover'); selections.insurance=needs; confetti(); bot(`<span class="ok">RM call request noted.</span>`); checkout(); }
+  function skipIns(){ selections.insurance=[]; checkout(); }
+
+  async function checkout(){
+    await typing();
+    const mfList=selections.mfs.map(c=>{ const mf=mfTable.find(x=>x.code===c); const amt=selections.mfAmounts[c]; return `${mf.name} — ₹${(amt||0).toLocaleString('en-IN')}/mo`; });
+    const items=[];
+    if(selections.equity) items.push(`• Equity Muhurat portfolio for <b>₹${investAmount.toLocaleString('en-IN')}</b> (style: <b>${styleSel}</b>)`);
+    if(mfList.length) items.push(`• SIPs: ${mfList.join('; ')}`);
+    if(selections.insurance.length) items.push(`• Insurance RM call: ${selections.insurance.join(', ')}`);
+    const list=items.length? items.join("<br>") : "• (none)";
+    bot(`✅ <b>Summary — Your Festival Wealth Basket</b><br>${list}<br><br><span class="note">Orders will be queued for the Muhurat window. Please ensure sufficient balance by <b>${MUHURAT_DATE}</b> for execution.</span>`);
+    await typing(600);
+    bot(`<b>We’re with you, ${userName}.</b> Confirm and queue this basket for Muhurat?`);
+    chips([["Confirm & Queue",()=>confirmQueue()],["Start over",()=>location.reload()]]);
+  }
+
+  function confirmQueue(){ confetti(); bot(`<span class="ok">Done!</span> Your orders are queued. We’re just a call away if you need anything.`); rmShowcase(); }
+
+  async function rmShowcase(){
+    await typing();
+    const html=`<div class="card"><b>We’re here to talk — your Branch & RM</b><div class="divider"></div><div class="rmcard"><div><b>Branch</b><br>Kochi — MG Road<br><span class="note">Mon–Sat, 9:30am–5:30pm</span></div><div><b>Relationship Manager</b><br>Priya Menon<br><span class="note">+91 98XXXXXX21 • WhatsApp enabled</span></div></div><div class="divider"></div><label class="pill"><input type="checkbox" id="rm-callback"> Please have my RM call me</label><div class="cta"><button onclick="__bookCallback()">Submit</button><button class="link" onclick="__delight()">No thanks</button></div><div class="note">You can also reply here anytime — we’ll respond quickly.</div></div>`;
+    bot(html);
+  }
+  function bookCallback(){ const chk=chat.querySelector('#rm-callback'); bot(chk?.checked?"Callback request sent to RM.":"No callback requested."); delight(); }
+
+  async function delight(){
+    await typing(450); confetti();
+    bot(`<div class="card certificate"><div style="font-size:18px;font-weight:700">Prosperity Pass 2025</div><div style="margin:6px 0">Issued to <b>${userName}</b></div><div class="note">“Geojit is with you for long-term wealth creation.”</div><div class="divider"></div><div class="note">Thank you for trusting us this Diwali. Wishing you growth, health, and happiness. 🪔</div></div>`);
+    await typing();
+    bot("Would you like a reminder on Muhurat morning and a summary after execution?");
+    chips([["Yes, set reminders",()=>bot("Reminder set ✓")],["Maybe later",()=>bot("Okay, anytime!")]]);
+  }
+
+  function advisor(){ bot("An advisor will call you shortly."); }
+
+  // expose
+  window.send = send;
+  window.advisor = advisor;
+  window.__updatePct = updatePct;
+  window.__stylePicker = ()=>stylePicker();
+  window.__addEquity = addEquity;
+  window.__addMF = addMF;
+  window.__skipMF = skipMF;
+  window.__arrangeCall = arrangeCall;
+  window.__skipIns = skipIns;
+  window.__bookCallback = bookCallback;
+  window.__delight = delight;
+  window.__recalcSIP = recalcSIP;
+
+  document.addEventListener('DOMContentLoaded', start);
+})();
+</script>
+</body>
+</html>
